@@ -7,11 +7,16 @@
 
 inline int32_t MIN(int32_t a, int32_t b) { return((a) < (b) ? a : b); }
 
-MODULE_API void grid_dither(const DitherImage* img, int w, int h, int min_pixels, bool alt_algorithm, uint8_t* out) {
+MODULE_API void grid_dither(const DitherImage* img, int w, int h, int min_pixels, bool alt_algorithm, int dot_size, int dot_spacing, uint8_t* out) {
     srand((uint32_t)time(NULL));
     size_t dimensions = (size_t)(img->width * img->height);
     for(size_t i = 0; i < dimensions; i++)
         out[i] = 0xff;
+    
+    // Ensure minimum values
+    if (dot_size < 1) dot_size = 1;
+    if (dot_spacing < 0) dot_spacing = 0;
+    
     int grid_width = w;
     int grid_height = h;
     int grid_area = grid_width * grid_height;
@@ -40,8 +45,15 @@ MODULE_API void grid_dither(const DitherImage* img, int w, int h, int min_pixels
                         int xr = rand() % (grid_width);
                         int yr = rand() % (grid_height);
                         if(o[yr * grid_width + xr] == 0) {
-                            if(x + xr < img->width && y + yr < img->height) {
-                                out[(y + yr) * img->width + x + xr] = 0;
+                            // Draw dot with size
+                            for(int dy = 0; dy < dot_size; dy++) {
+                                for(int dx = 0; dx < dot_size; dx++) {
+                                    int px = x + xr + dx;
+                                    int py = y + yr + dy;
+                                    if(px < img->width && py < img->height) {
+                                        out[py * img->width + px] = 0;
+                                    }
+                                }
                             }
                             o[yr * grid_width + xr] = 1;
                             c++;
@@ -56,8 +68,15 @@ MODULE_API void grid_dither(const DitherImage* img, int w, int h, int min_pixels
                 for (int i = 0; i < (int) n; i++) {
                     int xx = x + (rand() % (MIN(x + grid_width, img->width) - x));
                     int yy = y + (rand() % (MIN(y + grid_height, img->height) - y));
-                    if (xx < img->width && yy < img->height)
-                        out[yy * img->width + xx] = 0;
+                    // Draw dot with size
+                    for(int dy = 0; dy < dot_size; dy++) {
+                        for(int dx = 0; dx < dot_size; dx++) {
+                            int px = xx + dx;
+                            int py = yy + dy;
+                            if (px < img->width && py < img->height)
+                                out[py * img->width + px] = 0;
+                        }
+                    }
                 }
             }
         }

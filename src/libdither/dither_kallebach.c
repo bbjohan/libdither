@@ -3,14 +3,17 @@
 #include <math.h>
 #include <time.h>
 #include "libdither.h"
+#include "dither_utils.h"
 #include "dither_kallebach_data.h"
 
 
-MODULE_API void kallebach_dither(const DitherImage* img, bool random, uint8_t* out) {
+MODULE_API void kallebach_dither(const DitherImage* img, bool random, int dot_size, int dot_spacing, uint8_t* out) {
     /* Kacker and Allebach dithering.
      * The algorithm alternates between different dither arrays. The arrays can be
      * chosen at random (parameter: random = true) or in order (parameter: random = false)
      * */
+    (void)dot_size;
+    (void)dot_spacing;
     srand((uint32_t)time(NULL));
     const int dither_array_size = 32;
     const int dither_array_count = 4;

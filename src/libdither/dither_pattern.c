@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include "libdither.h"
+#include "dither_utils.h"
 #include "dither_pattern_data.h"
 
 MODULE_API TilePattern* get_2x2_pattern(void) { return TilePattern_new(2, 2, 5, tiles2x2); }
@@ -31,9 +32,11 @@ MODULE_API void TilePattern_free(TilePattern* self) {
     }
 }
 
-MODULE_API void pattern_dither(const DitherImage* img, const TilePattern *pattern, uint8_t* out) {
+MODULE_API void pattern_dither(const DitherImage* img, const TilePattern *pattern, int dot_size, int dot_spacing, uint8_t* out) {
     /* Pattern ditherer. Divides the source images into a grid and then chooses from a list of pre-defined
      * 1-bit patterns, based on source brightness, for each grid element */
+    (void)dot_size;
+    (void)dot_spacing;
     int th = pattern->height;
     int tw = pattern->width;
     int tile_size = tw * th;

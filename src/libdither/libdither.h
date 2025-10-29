@@ -67,7 +67,7 @@ MODULE_API uint8_t DitherImage_get_transparency(DitherImage* self, int x, int y)
  * min_pixels: minimum amount of pixels to set to black in each grid. Must be between 0 and width * height.
  *             for best results it is recommended to have this number at most at (width * height / 2)
  * algorithm: when true uses a modified algorithm that yields contrast that is more true to the input image */
-MODULE_API void grid_dither(const DitherImage* img, int w, int h, int min_pixels, bool alt_algorithm, uint8_t* out);
+MODULE_API void grid_dither(const DitherImage* img, int w, int h, int min_pixels, bool alt_algorithm, int dot_size, int dot_spacing, uint8_t* out);
 
 /* ********************************** */
 /* **** ERROR DIFFUSION DITHERER **** */
@@ -83,7 +83,7 @@ MODULE_API void ErrorDiffusionMatrix_free(ErrorDiffusionMatrix* self);
  * m: an error diffusion matrix structure. This library contains many built-in matrices
  * serpentine: if the image should be traversed from top to bottom in a serpentine (left-to-right, right-to-left, etc.) manner
  * sigma: introduces jitter to the dither output to make it appear less regular. Recommended range: 0.0 - 1.0 */
-MODULE_API void error_diffusion_dither(const DitherImage* img, const ErrorDiffusionMatrix* m, bool serpentine, double sigma, uint8_t* out);
+MODULE_API void error_diffusion_dither(const DitherImage* img, const ErrorDiffusionMatrix* m, bool serpentine, double sigma, int dot_size, int dot_spacing, uint8_t* out);
 /* below functions return different error diffusion matrices which can be used as input for 'error_diffusion_dither' */
 MODULE_API ErrorDiffusionMatrix* get_xot_matrix(void);
 MODULE_API ErrorDiffusionMatrix* get_diagonal_matrix(void);
@@ -118,7 +118,7 @@ MODULE_API void OrderedDitherMatrix_free(OrderedDitherMatrix *self);
 /* Uses the ordered dither algorithm to dither an image.
  * matrix: an OrderedDitherMatrix which determines how the image will be dithered
  * sigma: introduces jitter to the dither output to make it appear less regular. Recommended range 0.0 - 0.2 */
-MODULE_API void ordered_dither(const DitherImage* img, const OrderedDitherMatrix* matrix, double sigma, uint8_t* out);
+MODULE_API void ordered_dither(const DitherImage* img, const OrderedDitherMatrix* matrix, double sigma, int dot_size, int dot_spacing, uint8_t* out);
 /* below functions return different ordered dither matrices which can be used as input for 'ordered_dither' */
 MODULE_API OrderedDitherMatrix* get_blue_noise_128x128(void);
 MODULE_API OrderedDitherMatrix* get_bayer2x2_matrix(void);
@@ -189,7 +189,7 @@ MODULE_API DotDiffusionMatrix* DotDiffusionMatrix_new(int width, int height, con
 /* frees the dithering matrix's memory */
 MODULE_API void DotDiffusionMatrix_free(DotDiffusionMatrix* self);
 /* Uses grid dither algorithm to dither an image - allows for different combination of class and diffusion matrices */
-MODULE_API void dot_diffusion_dither(const DitherImage* img, const DotDiffusionMatrix* dmatrix, const DotClassMatrix* cmatrix, uint8_t* out);
+MODULE_API void dot_diffusion_dither(const DitherImage* img, const DotDiffusionMatrix* dmatrix, const DotClassMatrix* cmatrix, int dot_size, int dot_spacing, uint8_t* out);
 /* below functions return different ordered dither matrices which can be used as input for 'dot_diffusion_dither' */
 MODULE_API DotDiffusionMatrix* get_default_diffusion_matrix(void);
 MODULE_API DotDiffusionMatrix* get_guoliu8_diffusion_matrix(void);
@@ -213,7 +213,7 @@ enum VarDitherType{Ostromoukhov, Zhoufang};
 /* Uses variable error diffusion dither algorithm to dither an image.
  * type: Ostromoukhov or Zhoufang
  * serpentine: if the image should be traversed from top to bottom in a serpentine (left-to-right, right-to-left, etc.) manner */
-MODULE_API void variable_error_diffusion_dither(const DitherImage* img, enum VarDitherType type, bool serpentine, uint8_t* out);
+MODULE_API void variable_error_diffusion_dither(const DitherImage* img, enum VarDitherType type, bool serpentine, int dot_size, int dot_spacing, uint8_t* out);
 
 /* **************************** */
 /* **** THRESHOLD DITHERER **** */
@@ -224,7 +224,7 @@ MODULE_API double auto_threshold(const DitherImage* img);
 /* Uses thresholding algorithm to dither an image.
  * threshold: threshold for dithering a pixel as black. from 0.0 to 1.0.
  * noise: amount of noise. from 0.0 to 1.0. Recommended 0.55 */
-MODULE_API void threshold_dither(const DitherImage* img, double threshold, double noise, uint8_t* out);
+MODULE_API void threshold_dither(const DitherImage* img, double threshold, double noise, int dot_size, int dot_spacing, uint8_t* out);
 
 /* ********************** */
 /* **** DBS DITHERER **** */
@@ -232,7 +232,7 @@ MODULE_API void threshold_dither(const DitherImage* img, double threshold, doubl
 
 /* Uses the direct binary search (DBS) dither algorithm to dither an image. */
 // v: value from 0-7. The higher the value, the coarser the output dither will be.
-MODULE_API void dbs_dither(const DitherImage* img, int v, uint8_t* out);
+MODULE_API void dbs_dither(const DitherImage* img, int v, int dot_size, int dot_spacing, uint8_t* out);
 
 /* *************************************** */
 /* **** KACKER AND ALLEBACH DITHERING **** */
@@ -240,7 +240,7 @@ MODULE_API void dbs_dither(const DitherImage* img, int v, uint8_t* out);
 
 /* Uses the Kacker and Allebach dither algorithm to dither an image.
  * random: when false, dither output will always be the same for the same image; otherwise there will be randomness */
-MODULE_API void kallebach_dither(const DitherImage* img, bool random, uint8_t* out);
+MODULE_API void kallebach_dither(const DitherImage* img, bool random, int dot_size, int dot_spacing, uint8_t* out);
 
 /* **************************** */
 /* **** RIEMERSMA DITHERER **** */
@@ -258,7 +258,7 @@ MODULE_API void RiemersmaCurve_free(RiemersmaCurve* self);
 MODULE_API char* create_curve(RiemersmaCurve* curve, int width, int height, int* curve_dim);
 /* Uses the Riemersma dither algorithm to dither an image.
  * use_riemersma: when false, uses a slightly improved algorithm for better visual results. */
-MODULE_API void riemersma_dither(const DitherImage* img, RiemersmaCurve* curve, bool use_riemersma, uint8_t* out);
+MODULE_API void riemersma_dither(const DitherImage* img, RiemersmaCurve* curve, bool use_riemersma, int dot_size, int dot_spacing, uint8_t* out);
 /* below functions return different curves which can be used as input for 'riemersma_dither' */
 MODULE_API RiemersmaCurve* get_hilbert_curve(void);
 MODULE_API RiemersmaCurve* get_hilbert_mod_curve(void);
@@ -280,7 +280,7 @@ MODULE_API TilePattern* TilePattern_new(int width, int height, int num_tiles, co
 /* frees the tile pattern's memory */
 MODULE_API void TilePattern_free(TilePattern* self);
 /* Uses the pattern dither algorithm to dither an image. */
-MODULE_API void pattern_dither(const DitherImage* img, const TilePattern *pattern, uint8_t* out);
+MODULE_API void pattern_dither(const DitherImage* img, const TilePattern *pattern, int dot_size, int dot_spacing, uint8_t* out);
 /* below functions return tile patterns which can be used as input for 'pattern_dither' */
 MODULE_API TilePattern* get_2x2_pattern(void);
 MODULE_API TilePattern* get_3x3_v1_pattern(void);
@@ -302,7 +302,7 @@ MODULE_API void DotLippensCoefficients_free(DotLippensCoefficients* self);
 /* Function for calculating a Lippens & Philips class matrix */
 MODULE_API int* create_dot_lippens_class_matrix(void);
 /* Uses Lippens and Philip's dot dither algorithm to dither an image. */
-MODULE_API void dotlippens_dither(const DitherImage* img, const DotClassMatrix* class_matrix, const DotLippensCoefficients* coefficients, uint8_t* out);
+MODULE_API void dotlippens_dither(const DitherImage* img, const DotClassMatrix* class_matrix, const DotLippensCoefficients* coefficients, int dot_size, int dot_spacing, uint8_t* out);
 /* below functions return matrices which can be used as input for 'dotlippens_dither' */
 MODULE_API DotClassMatrix* get_dotlippens_class_matrix(void);
 MODULE_API DotLippensCoefficients* get_dotlippens_coefficients1(void);
@@ -352,8 +352,8 @@ MODULE_API ByteColor* BytePalette_get(const BytePalette* self, size_t index);
 MODULE_API void BytePalette_set(BytePalette* self, size_t index, const ByteColor* c);
 MODULE_API BytePalette* BytePalette_copy(const BytePalette* in);
 
-MODULE_API void error_diffusion_dither_color(const ColorImage* img, const ErrorDiffusionMatrix* m, CachedPalette* lookup_pal, bool serpentine, int* out);
-MODULE_API void ordered_dither_color(const ColorImage* image, CachedPalette* lookup_pal, const OrderedDitherMatrix* matrix, int* out);
+MODULE_API void error_diffusion_dither_color(const ColorImage* img, const ErrorDiffusionMatrix* m, CachedPalette* lookup_pal, bool serpentine, int dot_size, int dot_spacing, int* out);
+MODULE_API void ordered_dither_color(const ColorImage* image, CachedPalette* lookup_pal, const OrderedDitherMatrix* matrix, int dot_size, int dot_spacing, int* out);
 
 MODULE_API void rgb_to_linear(const FloatColor* c, FloatColor* out);
 

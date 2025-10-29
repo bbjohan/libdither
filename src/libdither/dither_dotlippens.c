@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "libdither.h"
+#include "dither_utils.h"
 #include "dither_dotlippens_data.h"
 
 MODULE_API int* create_dot_lippens_cm(void) {
@@ -46,10 +47,12 @@ MODULE_API DotLippensCoefficients* get_dotlippens_coefficients1(void) { return D
 MODULE_API DotLippensCoefficients* get_dotlippens_coefficients2(void) { return DotLippensCoefficients_new(5, 5, dotlippens2_coe); }
 MODULE_API DotLippensCoefficients* get_dotlippens_coefficients3(void) { return DotLippensCoefficients_new(5, 5, dotlippens3_coe); }
 
-MODULE_API void dotlippens_dither(const DitherImage* img, const DotClassMatrix* class_matrix, const DotLippensCoefficients* coefficients, uint8_t* out) {
+MODULE_API void dotlippens_dither(const DitherImage* img, const DotClassMatrix* class_matrix, const DotLippensCoefficients* coefficients, int dot_size, int dot_spacing, uint8_t* out) {
     /* Lippens and Philips Dot Dithering
      * class_matix: same class matrix as used by regular (Knuth's) dot ditherer
      * coefficients: Lippens and Philips coefficients */
+    (void)dot_size;
+    (void)dot_spacing;
     double coefficients_sum = 0.0;
     for(int i = 0; i < coefficients->width * coefficients->height; i++)
         coefficients_sum += (double)coefficients->buffer[i];

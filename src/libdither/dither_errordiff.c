@@ -9,6 +9,7 @@
 #include "color_floatpalette.h"
 #include "color_models.h"
 #include "random.h"
+#include "dither_utils.h"
 #include "dither_errordiff_data.h"
 
 /* ***** BUILT-IN DIFFUSION MATRICES ***** */
@@ -60,6 +61,8 @@ MODULE_API void error_diffusion_dither(const DitherImage* img,
                                        const ErrorDiffusionMatrix* m,
                                        bool serpentine,
                                        double sigma,
+                                       int dot_size,
+                                       int dot_spacing,
                                        uint8_t* out) {
     /* Error Diffusion dithering
      * img: source image to be dithered
@@ -67,6 +70,9 @@ MODULE_API void error_diffusion_dither(const DitherImage* img,
      * sigma: jitter
      * setPixel: callback function to set a pixel
      */
+    if (dot_size < 1) dot_size = 1;
+    if (dot_spacing < 0) dot_spacing = 0;
+    
     // prepare the matrix...
     int i = 0;
     int j = 0;
@@ -119,8 +125,8 @@ MODULE_API void error_diffusion_dither(const DitherImage* img,
                 double err = buffer[addr];
                 if (sigma > 0.0)
                     threshold = box_muller(sigma, 0.5);
-                if (err > threshold) {
-                    out[addr] = 0xff;
+                if (err > threshold && should_process_pixel(x, y, dot_size, dot_spacing)) {
+                    set_pixel_with_dot_size(out, img->width, img->height, x, y, 0xff, dot_size);
                     err -= 1.0;
                 }
                 err /= m->divisor;
@@ -146,7 +152,10 @@ MODULE_API void error_diffusion_dither(const DitherImage* img,
 }
 
 MODULE_API void error_diffusion_dither_color(const ColorImage* img, const ErrorDiffusionMatrix* m,
-                                             CachedPalette* lookup_pal, bool serpentine, int* out) {
+                                             CachedPalette* lookup_pal, bool serpentine, int dot_size, int dot_spacing, int* out) {
+    if (dot_size < 1) dot_size = 1;
+    if (dot_spacing < 0) dot_spacing = 0;
+    
     // prepare the matrix...
     int i = 0;
     int j = 0;
@@ -183,6 +192,7 @@ MODULE_API void error_diffusion_dither_color(const ColorImage* img, const ErrorD
     int direction = 0; // FORWARD
     int direction_toggle = 1;
     if(serpentine) direction_toggle = 2;
+    
     for(int y = 0; y < img->height; y++) {
         int start, end, step;
         if (direction == 0) {
@@ -203,27 +213,31 @@ MODULE_API void error_diffusion_dither_color(const ColorImage* img, const ErrorD
                 FloatColor_clamp(color);
 
                 size_t index = CachedPalette_find_closest_color(lookup_pal, color); // get closest
-                out[addr] = (int) index; // set out image
+                
+                if (should_process_pixel(x, y, dot_size, dot_spacing)) {
+                    set_color_pixel_with_dot_size(out, img->width, img->height, x, y, (int)index, dot_size);
+                }
+                
                 ByteColor *srgb_b = BytePalette_get(lookup_pal->target_palette, index); // get sRGB color
-
                 FloatColor_from_ByteColor(&error_new, srgb_b);
                 FloatColor_sub(color, &error_new); // calculate new error
+                    
                 for (int g = 0; g < matrix_length; g++) {
-                    int xx = x + m_offset_x[g + matrix_length * direction];
-                    if (-1 < xx && xx < img->width) {
-                        int yy = y + m_offset_y[g];
-                        if (yy < img->height) {
-                            double dd = (double) m_weights[g + matrix_length * direction] / m->divisor;
-                            addr = (size_t)(yy * img->width + xx);
-                            buffer[addr].r += (color->r * dd);
-                            buffer[addr].g += (color->g * dd);
-                            buffer[addr].b += (color->b * dd);
+                        int xx = x + m_offset_x[g + matrix_length * direction];
+                        if (-1 < xx && xx < img->width) {
+                            int yy = y + m_offset_y[g];
+                            if (yy < img->height) {
+                                double dd = (double) m_weights[g + matrix_length * direction] / m->divisor;
+                                addr = (size_t)(yy * img->width + xx);
+                                buffer[addr].r += (color->r * dd);
+                                buffer[addr].g += (color->g * dd);
+                                buffer[addr].b += (color->b * dd);
+                            }
                         }
                     }
+                } else {
+                    out[addr] = -1;  // transparent
                 }
-            } else {
-                out[addr] = -1;  // transparent
-            }
         }
         direction = (y + 1) % direction_toggle;
     }

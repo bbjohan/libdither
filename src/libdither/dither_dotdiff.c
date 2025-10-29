@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "libdither.h"
+#include "dither_utils.h"
 #include "dither_dotdiff_data.h"
 #include "uthash/uthash.h"
 
@@ -68,8 +69,11 @@ MODULE_API void DotDiffusionMatrix_free(DotDiffusionMatrix* self) {
     }
 }
 
-MODULE_API void dot_diffusion_dither(const DitherImage* img, const DotDiffusionMatrix* dmatrix, const DotClassMatrix* cmatrix, uint8_t* out) {
+MODULE_API void dot_diffusion_dither(const DitherImage* img, const DotDiffusionMatrix* dmatrix, const DotClassMatrix* cmatrix, int dot_size, int dot_spacing, uint8_t* out) {
     /* Knuth's dot dither algorithm */
+    if (dot_size < 1) dot_size = 1;
+    if (dot_spacing < 0) dot_spacing = 0;
+    
     int blocksize = cmatrix->width;
 
     DotDitherHashEntry* lut = NULL;
@@ -113,7 +117,7 @@ MODULE_API void dot_diffusion_dither(const DitherImage* img, const DotDiffusionM
                         continue;
                     double err = orig_img[addr];
                     if (err >= 0.5) {
-                        out[addr] = 0xff;
+                        set_pixel_with_dot_size(out, img->width, img->height, imgx, imgy, 0xff, dot_size);
                         err -= 1.0;
                     }
                     size_t j = 0;

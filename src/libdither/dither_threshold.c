@@ -1,6 +1,7 @@
 #define MODULE_API_EXPORTS
 #include <stdlib.h>
 #include "libdither.h"
+#include "dither_utils.h"
 #include "random.h"
 
 MODULE_API double auto_threshold(const DitherImage* img) {
@@ -23,11 +24,14 @@ MODULE_API double auto_threshold(const DitherImage* img) {
     return gamma_decode(avg + v);
 }
 
-MODULE_API void threshold_dither(const DitherImage* img, double threshold, double noise, uint8_t* out) {
+MODULE_API void threshold_dither(const DitherImage* img, double threshold, double noise, int dot_size, int dot_spacing, uint8_t* out) {
     /* Threshold dithering
      * threshold: threshold to dither a pixel black. From 0.0 to 1.0. Suggested value: 0.5.
      * noise: amount of noise / randomness in pixel placement
      * */
+    if (dot_size < 1) dot_size = 1;
+    if (dot_spacing < 0) dot_spacing = 0;
+    
     size_t addr = 0;
     threshold = (0.5 * noise + threshold * (1.0 - noise));
     for(int y = 0; y < img -> height; y++) {
@@ -36,8 +40,8 @@ MODULE_API void threshold_dither(const DitherImage* img, double threshold, doubl
                 double px = img->buffer[addr];
                 if (noise > 0)
                     px += (rand_float() - 0.5) * noise;
-                if (px > threshold)
-                    out[addr] = 0xff;
+                if (px > threshold && should_process_pixel(x, y, dot_size, dot_spacing))
+                    set_pixel_with_dot_size(out, img->width, img->height, x, y, 0xff, dot_size);
             } else
                 out[addr] = 128;
             addr++;

@@ -4,11 +4,14 @@
 #include <time.h>
 #include <string.h>
 #include "libdither.h"
+#include "dither_utils.h"
 #include "dither_varerrdiff_data.h"
 
 
-MODULE_API void variable_error_diffusion_dither(const DitherImage* img, enum VarDitherType type, bool serpentine, uint8_t* out) {
+MODULE_API void variable_error_diffusion_dither(const DitherImage* img, enum VarDitherType type, bool serpentine, int dot_size, int dot_spacing, uint8_t* out) {
     /* Variable Error Diffusion, implementing Ostromoukhov's and Zhou Fang's approach */
+    (void)dot_size;
+    (void)dot_spacing;
     srand((uint32_t)time(NULL));
     // dither matrix
     const int m_offset_x[2][3] = {{1, -1, 0}, {-1, 1, 0}};

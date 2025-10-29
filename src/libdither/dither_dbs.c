@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "libdither.h"
+#include "dither_utils.h"
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -104,11 +105,13 @@ void get_cep(const DitherImage* img, int width, int height, int v, Matrix** cpp,
     Matrix_free(err);
 }
 
-MODULE_API void dbs_dither(const DitherImage* img, int v, uint8_t* out) {
+MODULE_API void dbs_dither(const DitherImage* img, int v, int dot_size, int dot_spacing, uint8_t* out) {
     /*
      * DBS dithering. Ported and adapted from Sankar Srinivasan's DBS ditherer (https://github.com/SankarSrin)
      * parameter v: 0 - 6. choose between 7 functions for matrix generation. The higher the number the coarser the output dither.
      */
+    (void)dot_size;
+    (void)dot_spacing;
     Matrix* cep = NULL;
     Matrix* cpp = NULL;
     const int half_cpp_size = 6;

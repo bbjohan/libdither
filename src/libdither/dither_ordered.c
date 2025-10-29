@@ -138,10 +138,12 @@ MODULE_API OrderedDitherMatrix* get_blue_noise_128x128(void) {
     return m;
 }
 
-MODULE_API void ordered_dither(const DitherImage* img, const OrderedDitherMatrix* matrix, double sigma, uint8_t* out) {
+MODULE_API void ordered_dither(const DitherImage* img, const OrderedDitherMatrix* matrix, double sigma, int dot_size, int dot_spacing, uint8_t* out) {
     /* Ordered dithering (mono)
      * sigma: introduces noise into the final dither to make it look less regular.
      * */
+    (void)dot_size;
+    (void)dot_spacing;
     int matrix_size = matrix->width * matrix->height;
     double* dmatrix = calloc((size_t)matrix_size, sizeof(double));
     double divisor = 1.0 / matrix->divisor;
@@ -167,10 +169,12 @@ MODULE_API void ordered_dither(const DitherImage* img, const OrderedDitherMatrix
 }
 
 MODULE_API void ordered_dither_color(const ColorImage* image, CachedPalette* lookup_pal,
-                                     const OrderedDitherMatrix* matrix, int* out) {
+                                     const OrderedDitherMatrix* matrix, int dot_size, int dot_spacing, int* out) {
     /* contrast and gamme can be used to compensate that ordered dither may sometimes be more or less bright, as
      * there is no error to distribute. Good values: gamma = 0.5, contrast = 1.8
      */
+    (void)dot_size;
+    (void)dot_spacing;
     int matrix_size = matrix->width * matrix->height;
     double* dmatrix = (double*)calloc((size_t)matrix_size, sizeof(double));
     for(int i = 0; i < matrix_size; i++) {

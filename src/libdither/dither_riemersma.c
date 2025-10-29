@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "libdither.h"
+#include "dither_utils.h"
 #include "queue.h"
 #include "dither_riemersma_data.h"
 
@@ -141,11 +142,13 @@ MODULE_API char* create_curve(RiemersmaCurve* curve, int width, int height, int*
     return axiom;
 }
 
-void riemersma_dither(const DitherImage* img, RiemersmaCurve* rcurve, bool use_riemersma, uint8_t* out) {
+void riemersma_dither(const DitherImage* img, RiemersmaCurve* rcurve, bool use_riemersma, int dot_size, int dot_spacing, uint8_t* out) {
     /* Riemersma dither. Uses a space filling curve to distribute the dithering error.
      * parameter use_riemersma: when true, uses a slightly modified version of the Riemersma calculations which may
      *                          improve dithering results
      */
+    (void)dot_size;
+    (void)dot_spacing;
     int max = 16;
     int err_len = use_riemersma? 16 : 8;
     Queue* q_err = Queue_new((size_t)err_len);
